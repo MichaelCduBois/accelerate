@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+
+	"github.com/MichaelCduBois/accelerate/internal/generator"
+	"github.com/MichaelCduBois/accelerate/internal/helpers"
 )
 
 func main() {
@@ -37,4 +40,12 @@ func main() {
 		fmt.Println("Unable to initialize go module: ", err)
 		return
 	}
+	// Get Installed Go Version
+	goVersion, err := helpers.GetGoVersion()
+	if err != nil {
+		fmt.Println("Unable to get go version: ", err)
+		return
+	}
+	// Generate Docker Config Files
+	generator.DockerConfigFiles(string(goVersion), os.Args[2])
 }

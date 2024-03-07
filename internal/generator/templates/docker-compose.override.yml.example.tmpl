@@ -1,0 +1,16 @@
+version: "3.9"
+
+services:
+  server:
+    container_name: {{.ProjectName}}-dev
+    image: {{.ProjectName}}
+    build:
+      context: .
+      target: builder
+    command: go run server.go
+    volumes:
+      - ./:/app
+
+  database:
+    ports:
+      - 5432:5432

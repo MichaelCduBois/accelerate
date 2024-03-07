@@ -1,0 +1,65 @@
+version: "3.9"
+
+services:
+  traefik:
+    container_name: traefik
+    image: traefik:v2.10.7
+    command:
+      - --api.insecure=true
+      - --api.dashboard=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:8888
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --entrypoints.websecure.address=:443
+      - --certificatesresolvers.myresolver.acme.tlschallenge=true
+      - --certificatesresolvers.myresolver.acme.email=<your-email>
+      - --certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.traefik.rule=Host(`traefik.localhost`)
+      - traefik.http.routers.traefik.entrypoints=websecure
+      - traefik.http.routers.traefik.service=api@internal
+      - traefik.http.routers.traefik.tls=true
+      - traefik.http.routers.traefik.tls.certresolver=myresolver
+    ports:
+      - 80:8888
+      - 443:443
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./letsencrypt:/letsencrypt
+
+  server:
+    container_name: {{.ProjectName}}
+    image: {{.ProjectName}}
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.{{.ProjectName}}.rule=Host(`server.localhost`)
+      - traefik.http.routers.{{.ProjectName}}.entrypoints=websecure
+      - traefik.http.routers.{{.ProjectName}}.tls=true
+      - traefik.http.routers.{{.ProjectName}}.tls.certresolver=myresolver
+      - traefik.http.middlewares.{{.ProjectName}}.ratelimit.average=100
+    environment:
+      DATABASE_USER: accelerate-user
+      DATABASE_PASS: accelerate-pass
+      PORT: 8888
+    expose:
+      - 8888
+    restart: always
+
+  database:
+    container_name: database
+    image: postgres:16.1-alpine3.19
+    environment:
+      POSTGRES_USER: accelerate-user
+      POSTGRES_PASSWORD: accelerate-pass
+      POSTGRES_DB: accelerate-db
+    expose:
+      - 5432
+    volumes:
+      - database:/data/db
+    restart: always
+
+volumes:
+  database:
