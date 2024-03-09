@@ -23,6 +23,12 @@ func main() {
 	if err := cmd.Run(); err != nil {
 		return
 	}
+	// Create git repository
+	cmd = exec.Command("git", "init")
+	cmd.Dir = os.Args[2]
+	if err := cmd.Run(); err != nil {
+		return
+	}
 	// Change to project directory
 	cmd = exec.Command("cd", os.Args[2])
 	cmd.Stdout = os.Stdout
